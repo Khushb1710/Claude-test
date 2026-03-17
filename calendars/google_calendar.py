@@ -40,7 +40,20 @@ def get_google_credentials() -> Credentials:
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(settings.google_credentials_file), SCOPES
             )
-            creds = flow.run_local_server(port=8080, open_browser=False)
+            auth_url, _ = flow.authorization_url(prompt="consent")
+            print("\nVisit this URL to authorize:\n")
+            print(auth_url)
+            print("\nAfter granting permission, your browser will redirect to")
+            print("http://localhost:8080/?code=... and show a connection error.")
+            print("Copy the FULL URL from the browser address bar and paste it here.\n")
+            redirect_url = input("Paste the full redirect URL: ").strip()
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(redirect_url)
+            code = parse_qs(parsed.query).get("code", [None])[0]
+            if not code:
+                raise ValueError("No authorization code found in the URL.")
+            flow.fetch_token(code=code)
+            creds = flow.credentials
         token_path.parent.mkdir(parents=True, exist_ok=True)
         token_path.write_text(creds.to_json())
 
