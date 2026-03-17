@@ -1,8 +1,23 @@
 """Central configuration loaded from environment variables."""
 
-from pydantic_settings import BaseSettings
+import json
+from pydantic_settings import BaseSettings, EnvSettingsSource, DotEnvSettingsSource
 from pydantic import Field
 from pathlib import Path
+from typing import Any
+
+# Fields that accept comma-separated values in the .env file
+_CSV_FIELDS = {"microsoft_accounts", "default_email_recipients"}
+
+
+class _CsvDotEnvSource(DotEnvSettingsSource):
+    """Converts CSV env values to JSON arrays before pydantic-settings parses them."""
+
+    def prepare_field_value(self, field_name: str, field: Any, value: Any, value_is_complex: bool) -> Any:
+        if field_name in _CSV_FIELDS and isinstance(value, str) and not value.strip().startswith("["):
+            items = [v.strip() for v in value.split(",") if v.strip()]
+            value = json.dumps(items)
+        return super().prepare_field_value(field_name, field, value, value_is_complex)
 
 
 class Settings(BaseSettings):
@@ -48,12 +63,15 @@ class Settings(BaseSettings):
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, **kwargs):
+        sources = [kwargs[k] for k in kwargs if kwargs[k] is not None and k != "dotenv_settings"]
+        csv_source = _CsvDotEnvSource(settings_cls, env_file=".env")
+        # Insert CSV dotenv source after env_settings (index 1)
+        sources.insert(2, csv_source)
+        return tuple(sources)
+
     def model_post_init(self, __context) -> None:
-        # Parse comma-separated list fields
-        if isinstance(self.microsoft_accounts, str):
-            self.microsoft_accounts = [a.strip() for a in self.microsoft_accounts.split(",") if a.strip()]
-        if isinstance(self.default_email_recipients, str):
-            self.default_email_recipients = [e.strip() for e in self.default_email_recipients.split(",") if e.strip()]
         self.data_dir.mkdir(parents=True, exist_ok=True)
         Path("credentials").mkdir(exist_ok=True)
 
