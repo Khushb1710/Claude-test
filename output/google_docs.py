@@ -3,7 +3,7 @@
 from loguru import logger
 from googleapiclient.discovery import build
 
-from calendar.google_calendar import get_google_credentials
+from calendars.google_calendar import get_google_credentials
 from models import MeetingNotes
 
 

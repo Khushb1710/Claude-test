@@ -17,7 +17,7 @@ import schedule
 from loguru import logger
 
 from config import settings
-from calendar import fetch_all_upcoming_meetings
+from calendars import fetch_all_upcoming_meetings
 from models import Meeting
 from orchestrator import run_meeting
 
@@ -67,7 +67,7 @@ async def _run_and_track(meeting: Meeting) -> None:
 async def join_from_url(url: str, title: str = "Ad-hoc Meeting") -> None:
     """Immediately join a meeting by URL without calendar lookup."""
     from models import Platform
-    from calendar.google_calendar import _detect_platform
+    from calendars.google_calendar import _detect_platform
 
     platform = _detect_platform(url)
     now = datetime.now(timezone.utc)

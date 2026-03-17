@@ -8,8 +8,8 @@ loguru==0.7.2
 # Meeting bots - headless browser automation
 playwright==1.43.0
 
-# Audio recording
-pyaudio==0.2.14
+# Audio recording (sounddevice requires libportaudio2; install with: sudo apt install libportaudio2)
+# These are optional — ffmpeg or arecord can be used as fallback backends
 sounddevice==0.4.6
 soundfile==0.12.1
 numpy==1.26.4
