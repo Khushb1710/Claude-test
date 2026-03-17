@@ -40,7 +40,12 @@ def get_google_credentials() -> Credentials:
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(settings.google_credentials_file), SCOPES
             )
-            creds = flow.run_local_server(port=0)
+            flow.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+            auth_url, _ = flow.authorization_url(prompt="consent")
+            print(f"\nOpen this URL in your browser:\n{auth_url}\n")
+            code = input("Paste the authorization code here: ")
+            flow.fetch_token(code=code)
+            creds = flow.credentials
         token_path.parent.mkdir(parents=True, exist_ok=True)
         token_path.write_text(creds.to_json())
 
