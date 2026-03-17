@@ -15,8 +15,11 @@ SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
 ]
 
+REDIRECT_URI = "http://localhost"
+
 flow = InstalledAppFlow.from_client_secrets_file(
-    str(settings.google_credentials_file), SCOPES
+    str(settings.google_credentials_file), SCOPES,
+    redirect_uri=REDIRECT_URI,
 )
 
 if len(sys.argv) == 1:
@@ -25,8 +28,8 @@ if len(sys.argv) == 1:
     print("\nStep 1: Open this URL in your browser:\n")
     print(auth_url)
     print("\nStep 2: After granting permission, your browser will try to load")
-    print("http://localhost:8080/?code=... and show a connection error.")
-    print("Copy the FULL URL from the address bar, then run:")
+    print("http://localhost/?code=... and show a connection error.")
+    print("Copy the FULL URL from the address bar, then paste it here:")
     print('\n  python setup_auth.py "<paste-full-url-here>"\n')
 else:
     # Step 2: exchange code for token
@@ -36,7 +39,7 @@ else:
     if not code:
         print("ERROR: No 'code' found in the URL. Make sure you copied the full URL.")
         sys.exit(1)
-    flow.fetch_token(code=code)
+    flow.fetch_token(code=code, redirect_uri=REDIRECT_URI)
     creds = flow.credentials
     token_path = settings.google_token_file
     token_path.parent.mkdir(parents=True, exist_ok=True)
