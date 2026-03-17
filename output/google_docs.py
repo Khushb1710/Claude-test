@@ -1,9 +1,7 @@
 """Save meeting notes to Google Docs."""
 
 from loguru import logger
-from googleapiclient.discovery import build
-
-from calendars.google_calendar import get_google_credentials
+from calendars.google_calendar import get_google_credentials, build_google_service
 from models import MeetingNotes
 
 
@@ -13,8 +11,8 @@ def save_to_google_docs(notes: MeetingNotes) -> str:
     Returns the URL of the created document.
     """
     creds = get_google_credentials()
-    docs_service = build("docs", "v1", credentials=creds)
-    drive_service = build("drive", "v3", credentials=creds)
+    docs_service = build_google_service("docs", "v1", creds)
+    drive_service = build_google_service("drive", "v3", creds)
 
     title = f"Meeting Notes: {notes.meeting.title} — {notes.meeting.start_time.strftime('%Y-%m-%d')}"
 

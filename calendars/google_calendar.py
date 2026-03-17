@@ -1,9 +1,13 @@
 """Google Calendar integration — fetches upcoming meetings."""
 
 import re
+import ssl
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+import httplib2
+import requests as _requests
+import google_auth_httplib2
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -25,6 +29,15 @@ _ZOOM_RE = re.compile(r"https://[a-z0-9.]*zoom\.us/j/\S+", re.IGNORECASE)
 _TEAMS_RE = re.compile(r"https://teams\.microsoft\.com/l/meetup-join/\S+", re.IGNORECASE)
 
 
+def build_google_service(name: str, version: str, creds: Credentials):
+    """Build a Google API service, disabling SSL verification when DEV_DISABLE_SSL is set."""
+    if settings.dev_disable_ssl:
+        http = httplib2.Http(disable_ssl_certificate_validation=True)
+        authorized_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
+        return build(name, version, http=authorized_http)
+    return build(name, version, credentials=creds)
+
+
 def get_google_credentials() -> Credentials:
     """Return valid Google OAuth2 credentials, refreshing or prompting as needed."""
     creds: Credentials | None = None
@@ -35,7 +48,12 @@ def get_google_credentials() -> Credentials:
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            if settings.dev_disable_ssl:
+                session = _requests.Session()
+                session.verify = False
+                creds.refresh(Request(session=session))
+            else:
+                creds.refresh(Request())
         else:
             _redirect_uri = "http://localhost"
             flow = InstalledAppFlow.from_client_secrets_file(
@@ -66,7 +84,7 @@ def fetch_upcoming_meetings(lookahead_minutes: int = 60) -> list[Meeting]:
     """Return meetings starting within the next *lookahead_minutes* minutes."""
     try:
         creds = get_google_credentials()
-        service = build("calendar", "v3", credentials=creds)
+        service = build_google_service("calendar", "v3", creds)
     except Exception as exc:
         logger.error(f"Google Calendar auth failed: {exc}")
         return []

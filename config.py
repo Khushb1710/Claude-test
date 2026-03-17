@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     bot_microsoft_password: str = Field("", env="BOT_MICROSOFT_PASSWORD")
 
     # App behaviour
+    dev_disable_ssl: bool = Field(False, env="DEV_DISABLE_SSL")
     join_buffer_minutes: int = Field(2, env="JOIN_BUFFER_MINUTES")
     data_dir: Path = Field(Path("./data"), env="DATA_DIR")
     whisper_model: str = Field("base", env="WHISPER_MODEL")
