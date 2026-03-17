@@ -39,7 +39,8 @@ else:
     if not code:
         print("ERROR: No 'code' found in the URL. Make sure you copied the full URL.")
         sys.exit(1)
-    flow.fetch_token(code=code, redirect_uri=REDIRECT_URI)
+    flow.redirect_uri = REDIRECT_URI
+    flow.fetch_token(code=code)
     creds = flow.credentials
     token_path = settings.google_token_file
     token_path.parent.mkdir(parents=True, exist_ok=True)
